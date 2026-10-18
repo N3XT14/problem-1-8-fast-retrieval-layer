@@ -69,7 +69,72 @@ def cmd_index(args: argparse.Namespace) -> None:
     base = read_fbin(base_path)
 
     build_index(base, args.out, cfg, normalize=True)
-    logger.info(f"Index built → {args.out}")
+
+    from data.synth_metadata import build_metadata
+    n = len(base)
+    logger.info(f"Building synthetic video metadata for {n:,} frames ...")
+    build_metadata(n=n, out_dir=args.out)
+    logger.info(f"Metadata written: {args.out}")
+
+
+def cmd_query(args: argparse.Namespace) -> None:
+    from data.formats import read_fbin
+    from data.synth_metadata import load_metadata
+    from indexer import load_index
+    from query_parser import parse_query
+    from retriever import Retriever
+
+    sq = parse_query(args.text, top_k=args.top_k)
+    logger.info(f"Query: {sq.raw!r}")
+    logger.info(f"  semantic={sq.semantic!r}  filters={sq.filters}")
+
+    # Load metadata if available
+    vt, db_con = None, None
+    vt_path = args.index_dir / "video_table.json"
+    if vt_path.exists():
+        vt, db_con = load_metadata(args.index_dir)
+        logger.info(f"Metadata loaded: {len(vt)} videos")
+
+    retriever = Retriever(args.index_dir, video_table=vt, db_con=db_con)
+    retriever.set_nprobe(64)
+
+    # Use a precomputed query vector from the queries file as the semantic vector.
+    # In production this would be replaced by a CLIP/MiniLM text embedding.
+    query_files = list(args.data_dir.glob("*quer*.fbin"))
+    if not query_files:
+        logger.error(f"No queries.fbin found in {args.data_dir}. Run download first.")
+        import sys; sys.exit(1)
+
+    queries = read_fbin(query_files[0])
+    import numpy as np
+    qv = queries[args.query_idx % len(queries)].astype(np.float32)
+    norm = np.linalg.norm(qv)
+    if norm > 0:
+        qv = qv / norm
+
+    resp = retriever.search(qv, k=sq.top_k, do_rerank=True, filters=sq.filters)
+
+    print(f"\n{'─'*65}")
+    print(f"Query : {sq.raw!r}")
+    print(f"Vector: queries[{args.query_idx}] (stand-in for text encoder output)")
+    print(f"Filters: video_id={sq.filters.video_id}  "
+          f"ts=[{sq.filters.timestamp_gte}, {sq.filters.timestamp_lte}]  "
+          f"tags={sq.filters.tags}")
+    print(f"{'─'*65}")
+    print(f"{'rank':>4}  {'video_id':>12}  {'timestamp':>10}  {'score':>7}  source")
+    print(f"{'─'*65}")
+    for i, r in enumerate(resp.results, 1):
+        print(f"{i:>4}  {r.video_id:>12}  {r.start_ts:>9.1f}s  {r.score:>7.4f}  {r.source}")
+    print(f"{'─'*65}")
+    print(f"Latency: filter={resp.latency.filter_ms:.2f}ms  "
+          f"ann={resp.latency.ann_ms:.2f}ms  "
+          f"rerank={resp.latency.rerank_ms:.2f}ms  "
+          f"diversify={resp.latency.diversify_ms:.2f}ms  "
+          f"total={resp.latency.total_ms:.2f}ms")
+    print(f"ndis={resp.ndis}  nprobe={resp.nprobe_used}  degraded={resp.degraded}\n")
+
+    if db_con:
+        db_con.close()
 
 
 def cmd_benchmark(args: argparse.Namespace) -> None:
@@ -90,6 +155,38 @@ def cmd_benchmark(args: argparse.Namespace) -> None:
             index_dir=args.index_dir,
             query_path=query_path,
             gt_path=gt_path if gt_path.exists() else None,
+            out_dir=args.out,
+            dataset_tag=args.index_dir.name,
+        )
+
+    if "b4" in suites:
+        from bench.filtered import run_b4
+        query_path = args.data_dir / "queries.fbin"
+        if not query_path.exists():
+            candidates = list(args.data_dir.glob("*quer*.fbin"))
+            if not candidates:
+                logger.error(f"No queries file found in {args.data_dir}.")
+                sys.exit(1)
+            query_path = candidates[0]
+        run_b4(
+            index_dir=args.index_dir,
+            query_path=query_path,
+            out_dir=args.out,
+            dataset_tag=args.index_dir.name,
+        )
+
+    if "b3" in suites:
+        from bench.cost_model import run_b3
+        query_path = args.data_dir / "queries.fbin"
+        if not query_path.exists():
+            candidates = list(args.data_dir.glob("*quer*.fbin"))
+            if not candidates:
+                logger.error(f"No queries file found in {args.data_dir}.")
+                sys.exit(1)
+            query_path = candidates[0]
+        run_b3(
+            index_dir=args.index_dir,
+            query_path=query_path,
             out_dir=args.out,
             dataset_tag=args.index_dir.name,
         )
@@ -136,6 +233,15 @@ def build_parser() -> argparse.ArgumentParser:
                        help="Directory containing queries.fbin and optionally gt.ibin")
     bench.add_argument("--out", type=Path, default=Path("benchmark_results/"))
 
+    qry = sub.add_parser("query", help="Run a single natural language query end-to-end")
+    qry.add_argument("--text", required=True, help="Natural language query string")
+    qry.add_argument("--index-dir", type=Path, required=True)
+    qry.add_argument("--data-dir", type=Path, default=Path("data/"),
+                     help="Directory containing queries.fbin (vector stand-in for text encoder)")
+    qry.add_argument("--top-k", type=int, default=10)
+    qry.add_argument("--query-idx", type=int, default=0,
+                     help="Which precomputed query vector to use as semantic embedding (default: 0)")
+
     return parser
 
 
@@ -151,6 +257,7 @@ def main() -> None:
         "download":  cmd_download,
         "index":     cmd_index,
         "benchmark": cmd_benchmark,
+        "query":     cmd_query,
     }
     dispatch[args.command](args)
 

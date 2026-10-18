@@ -1,19 +1,25 @@
-# Fill this in before you submit -- our evaluator runs these commands
-# EXACTLY as written, in this order, from a fresh checkout of your fork.
-# Keep every command non-interactive (no prompts) and idempotent.
+# Commands run EXACTLY as written, in order, from a fresh checkout.
+# All commands are non-interactive and idempotent.
 
 setup_commands:
   - "pip install -r requirements.txt"
-  # - add every other setup step here, in order (env vars, downloads, etc.)
 
 run_commands:
-  - "python src/main.py --help"
-  # - the real command(s) that actually run your solution
+  # 1. Download 100K T2I base vectors + 10K query vectors (~80 MB total, ~2 min)
+  - "python src/main.py download --dataset t2i --n 100000 --out data/"
+
+  # 2. Build IVF-PQ index + fp16 rerank store + metadata (~30 sec)
+  - "python src/main.py index --data-dir data/ --out index/t2i-100k/ --config t2i-100k"
+
+  # 3. Run B1 benchmark: recall@10 vs latency sweep across nprobe values
+  #    Outputs benchmark_results/b1_t2i-100k.json (pre-run results already committed)
+  - "python src/main.py benchmark --suite b1 --index-dir index/t2i-100k/ --data-dir data/ --out benchmark_results/"
 
 test_commands: []
-  # optional -- commands that run your own tests/checks, if you have any
 
-notes: ""
-  # anything we should know before running this (e.g. "needs a GPU",
-  # "takes about 10 minutes", "expects a sample dataset already present
-  # under data/, see docs/ for where to get it")
+notes: "
+Requires internet access for step 1 (Yandex T2I dataset, ~80 MB via HTTP Range requests).
+No GPU needed — CPU only.
+Total runtime: ~5 minutes on a modern laptop.
+Pre-run benchmark results are committed under benchmark_results/ for reference.
+"

@@ -47,7 +47,7 @@ class IndexConfig:
 
 
 # Yandex Text-to-Image, 200-dim, inner product
-# PQ25 → 25 subvectors x 8 dims = 200, subvector width = 8
+# PQ25 here it means 25 subvectors x 8 dims = 200, subvector width = 8
 T2I_100K = IndexConfig(
     name="t2i_100k", dim=200, metric=Metric.IP, pq_m=25, nlist=512,
 )

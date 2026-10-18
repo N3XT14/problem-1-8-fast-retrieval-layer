@@ -21,3 +21,4 @@ docs/
 notebooks/
 
 tests/
+src/bench/

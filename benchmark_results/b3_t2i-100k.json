@@ -1,0 +1,107 @@
+{
+  "benchmark": "B3_cost_model",
+  "dataset": "t2i-100k",
+  "measured_config": {
+    "n": 100000,
+    "nlist": 512,
+    "pq_m": 25,
+    "factory": "IVF512,PQ25x8"
+  },
+  "fit": {
+    "model": "t_ann_ms = t_overhead_ms + ndis \u00d7 t_per_code_ms",
+    "t_per_code_ms": 2.524e-05,
+    "t_per_code_us": 0.0252,
+    "t_overhead_ms": 0.017,
+    "r_squared": 0.9505
+  },
+  "measured_sweep": [
+    {
+      "nprobe": 1,
+      "mean_t_ann_ms": 0.08312478894367814,
+      "mean_ndis": 207.59,
+      "p95_t_ann_ms": 0.07793487166054547
+    },
+    {
+      "nprobe": 4,
+      "mean_t_ann_ms": 0.08787746599409729,
+      "mean_ndis": 808.41,
+      "p95_t_ann_ms": 0.09519096929579972
+    },
+    {
+      "nprobe": 8,
+      "mean_t_ann_ms": 0.09947896003723145,
+      "mean_ndis": 1584.925,
+      "p95_t_ann_ms": 0.11083298013545573
+    },
+    {
+      "nprobe": 16,
+      "mean_t_ann_ms": 0.12107539223507047,
+      "mean_ndis": 3125.93,
+      "p95_t_ann_ms": 0.13517732731997967
+    },
+    {
+      "nprobe": 32,
+      "mean_t_ann_ms": 0.16003265336621553,
+      "mean_ndis": 6124.615,
+      "p95_t_ann_ms": 0.17856073682196438
+    },
+    {
+      "nprobe": 64,
+      "mean_t_ann_ms": 0.23884791880846024,
+      "mean_ndis": 12200.48,
+      "p95_t_ann_ms": 0.2668104425538331
+    },
+    {
+      "nprobe": 128,
+      "mean_t_ann_ms": 0.4406341927824542,
+      "mean_ndis": 24599.75,
+      "p95_t_ann_ms": 0.5136038060300052
+    },
+    {
+      "nprobe": 256,
+      "mean_t_ann_ms": 1.3884360226802528,
+      "mean_ndis": 49728.255,
+      "p95_t_ann_ms": 1.7790771089494228
+    }
+  ],
+  "production_config_100m": {
+    "n": 100000000,
+    "nlist": 65536,
+    "pq_m": 64,
+    "factory": "IVF65536_HNSW32,PQ64x8",
+    "pq_m_scale_factor": 2.56,
+    "note": "t_per_code scaled by pq_m ratio (64/25=2.56\u00d7) \u2014 each PQ code requires pq_m table lookups"
+  },
+  "projection_100m": [
+    {
+      "nprobe": 32,
+      "ndis_100m": 48828.125,
+      "t_ann_p50_ms": 3.2,
+      "sub_second": true
+    },
+    {
+      "nprobe": 64,
+      "ndis_100m": 97656.25,
+      "t_ann_p50_ms": 6.3,
+      "sub_second": true
+    },
+    {
+      "nprobe": 128,
+      "ndis_100m": 195312.5,
+      "t_ann_p50_ms": 12.6,
+      "sub_second": true
+    },
+    {
+      "nprobe": 256,
+      "ndis_100m": 390625.0,
+      "t_ann_p50_ms": 25.3,
+      "sub_second": true
+    },
+    {
+      "nprobe": 512,
+      "ndis_100m": 781250.0,
+      "t_ann_p50_ms": 50.5,
+      "sub_second": true
+    }
+  ]
+}
