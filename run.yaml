@@ -1,25 +1,19 @@
 # Commands run EXACTLY as written, in order, from a fresh checkout.
 # All commands are non-interactive and idempotent.
+# Total runtime: ~5 minutes on a modern laptop (no GPU required).
+# Requires internet access for step 1 (~80 MB download via HTTP Range requests).
 
 setup_commands:
   - "pip install -r requirements.txt"
 
 run_commands:
-  # 1. Download 100K T2I base vectors + 10K query vectors (~80 MB total, ~2 min)
+  # 1. Download 100K T2I base vectors + 10K query vectors (~80 MB)
   - "python src/main.py download --dataset t2i --n 100000 --out data/"
 
-  # 2. Build IVF-PQ index + fp16 rerank store + metadata (~30 sec)
+  # 2. Build IVF-PQ FAISS index + fp16 rerank store + synthetic video metadata
   - "python src/main.py index --data-dir data/ --out index/t2i-100k/ --config t2i-100k"
 
-  # 3. Run B1 benchmark: recall@10 vs latency sweep across nprobe values
-  #    Outputs benchmark_results/b1_t2i-100k.json (pre-run results already committed)
-  - "python src/main.py benchmark --suite b1 --index-dir index/t2i-100k/ --data-dir data/ --out benchmark_results/"
+  # 3. End-to-end natural language query: parse -> filter -> ANN -> rerank -> diversify
+  - "python src/main.py query --text 'show me the dragon scene in video_0005 after 120s' --index-dir index/t2i-100k/ --data-dir data/ --top-k 10 --query-idx 42"
 
 test_commands: []
-
-notes: "
-Requires internet access for step 1 (Yandex T2I dataset, ~80 MB via HTTP Range requests).
-No GPU needed — CPU only.
-Total runtime: ~5 minutes on a modern laptop.
-Pre-run benchmark results are committed under benchmark_results/ for reference.
-"
