@@ -60,11 +60,17 @@ def cmd_index(args: argparse.Namespace) -> None:
         logger.error(f"Unknown config '{args.config}'. Choices: {list(DATASET_CONFIG)}")
         sys.exit(1)
 
-    base_files = sorted(args.data_dir.glob("*base*.fbin"))
-    if not base_files:
-        logger.error(f"No base*.fbin found in {args.data_dir}. Run download first.")
-        sys.exit(1)
-    base_path = base_files[0]
+    if args.base_file:
+        base_path = args.base_file
+        if not base_path.exists():
+            logger.error(f"Base file not found: {base_path}")
+            sys.exit(1)
+    else:
+        base_files = sorted(args.data_dir.glob("*base*.fbin"))
+        if not base_files:
+            logger.error(f"No base*.fbin found in {args.data_dir}. Run download first.")
+            sys.exit(1)
+        base_path = base_files[0]
     logger.info(f"Loading base vectors from {base_path} ...")
     base = read_fbin(base_path)
 
@@ -161,6 +167,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     idx = sub.add_parser("index", help="Build FAISS index + fp16 store + metadata")
     idx.add_argument("--data-dir", type=Path, required=True, help="Directory with .fbin files")
+    idx.add_argument("--base-file", type=Path, default=None, help="Explicit base vectors file (overrides glob)")
     idx.add_argument("--out", type=Path, default=Path("index/"), help="Index output directory")
     idx.add_argument(
         "--config", default="t2i-100k",

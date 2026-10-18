@@ -4,6 +4,7 @@ Assigns synthetic video metadata to a flat frame-ID space and writes a DuckDB da
 
 from __future__ import annotations
 
+import bisect
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -34,6 +35,10 @@ class VideoTable:
 
     def __init__(self, entries: list[VideoEntry]) -> None:
         self._table: dict[str, VideoEntry] = {e.video_id: e for e in entries}
+        # sorted by start_id for O(log n) frame_id → video_id lookup
+        _sorted = sorted(entries, key=lambda e: e.start_id)
+        self._start_ids: list[int] = [e.start_id for e in _sorted]
+        self._sorted_entries: list[VideoEntry] = _sorted
 
     def __len__(self) -> int:
         return len(self._table)
@@ -50,6 +55,14 @@ class VideoTable:
         e = self._table[video_id]
         n = e.end_id - e.start_id
         return e.start_id + min(int(ts * e.fps), n - 1)
+
+    def frame_id_to_video(self, frame_id: int) -> Optional[str]:
+        """O(log n) lookup: frame_id → video_id using bisect on sorted start_ids."""
+        i = bisect.bisect_right(self._start_ids, frame_id) - 1
+        if i < 0:
+            return None
+        e = self._sorted_entries[i]
+        return e.video_id if frame_id < e.end_id else None
 
     def frame_id_to_timestamp(self, frame_id: int, video_id: str) -> float:
         e = self._table[video_id]

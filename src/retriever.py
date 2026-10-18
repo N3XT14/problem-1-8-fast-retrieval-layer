@@ -202,10 +202,7 @@ class Retriever:
     def _video_id(self, frame_id: int) -> str:
         if self.video_table is None:
             return ""
-        for vid, e in self.video_table._table.items():
-            if e.start_id <= frame_id < e.end_id:
-                return vid
-        return ""
+        return self.video_table.frame_id_to_video(frame_id) or ""
 
     def _timestamp(self, frame_id: int) -> float:
         if self.video_table is None:
