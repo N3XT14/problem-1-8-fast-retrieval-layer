@@ -5,3 +5,19 @@ venv/
 .env
 node_modules/
 .DS_Store
+
+# Large binary data
+/data/
+
+# Built indexes
+index/
+
+# IDE
+.vscode/
+.idea/
+
+docs/
+
+notebooks/
+
+tests/

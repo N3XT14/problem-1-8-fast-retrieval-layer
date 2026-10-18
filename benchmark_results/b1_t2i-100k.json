@@ -1,0 +1,110 @@
+{
+  "benchmark": "B1_recall_latency",
+  "dataset": "t2i-100k",
+  "index_meta": {
+    "n": 100000,
+    "nlist": 512,
+    "pq_m": 25,
+    "factory": "IVF512,PQ25x8"
+  },
+  "n_eval_queries": 500,
+  "k": 10,
+  "sweep": [
+    {
+      "nprobe": 1,
+      "recall_ann": 0.2362,
+      "recall_reranked": 0.3914,
+      "ann_p50_ms": 0.13,
+      "ann_p95_ms": 0.19,
+      "ann_p99_ms": 0.24,
+      "total_p50_ms": 0.2,
+      "total_p95_ms": 0.36,
+      "total_p99_ms": 0.5,
+      "mean_ndis": 206.0
+    },
+    {
+      "nprobe": 4,
+      "recall_ann": 0.331,
+      "recall_reranked": 0.6474,
+      "ann_p50_ms": 0.11,
+      "ann_p95_ms": 0.13,
+      "ann_p99_ms": 0.14,
+      "total_p50_ms": 0.16,
+      "total_p95_ms": 0.17,
+      "total_p99_ms": 0.19,
+      "mean_ndis": 802.0
+    },
+    {
+      "nprobe": 8,
+      "recall_ann": 0.3524,
+      "recall_reranked": 0.743,
+      "ann_p50_ms": 0.15,
+      "ann_p95_ms": 0.25,
+      "ann_p99_ms": 0.26,
+      "total_p50_ms": 0.2,
+      "total_p95_ms": 0.32,
+      "total_p99_ms": 0.35,
+      "mean_ndis": 1569.0
+    },
+    {
+      "nprobe": 16,
+      "recall_ann": 0.3606,
+      "recall_reranked": 0.7896,
+      "ann_p50_ms": 0.29,
+      "ann_p95_ms": 0.35,
+      "ann_p99_ms": 0.41,
+      "total_p50_ms": 0.38,
+      "total_p95_ms": 0.47,
+      "total_p99_ms": 0.55,
+      "mean_ndis": 3091.0
+    },
+    {
+      "nprobe": 32,
+      "recall_ann": 0.3654,
+      "recall_reranked": 0.8164,
+      "ann_p50_ms": 0.23,
+      "ann_p95_ms": 0.3,
+      "ann_p99_ms": 0.33,
+      "total_p50_ms": 0.28,
+      "total_p95_ms": 0.37,
+      "total_p99_ms": 0.41,
+      "mean_ndis": 6116.0
+    },
+    {
+      "nprobe": 64,
+      "recall_ann": 0.3676,
+      "recall_reranked": 0.8284,
+      "ann_p50_ms": 0.35,
+      "ann_p95_ms": 0.4,
+      "ann_p99_ms": 0.43,
+      "total_p50_ms": 0.4,
+      "total_p95_ms": 0.46,
+      "total_p99_ms": 0.48,
+      "mean_ndis": 12180.0
+    },
+    {
+      "nprobe": 128,
+      "recall_ann": 0.368,
+      "recall_reranked": 0.8334,
+      "ann_p50_ms": 0.46,
+      "ann_p95_ms": 0.54,
+      "ann_p99_ms": 0.6,
+      "total_p50_ms": 0.5,
+      "total_p95_ms": 0.58,
+      "total_p99_ms": 0.65,
+      "mean_ndis": 24529.0
+    },
+    {
+      "nprobe": 256,
+      "recall_ann": 0.368,
+      "recall_reranked": 0.8338,
+      "ann_p50_ms": 0.92,
+      "ann_p95_ms": 1.32,
+      "ann_p99_ms": 1.36,
+      "total_p50_ms": 0.97,
+      "total_p95_ms": 1.39,
+      "total_p99_ms": 1.43,
+      "mean_ndis": 49666.0
+    }
+  ]
+}
