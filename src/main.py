@@ -4,7 +4,7 @@ Fast Retrieval Layer — CLI entry point.
 Usage:
   python src/main.py download  --dataset t2i  --n 100000  --out data/
   python src/main.py index     --data-dir data/  --out index/t2i-100k/  --config t2i-100k
-  python src/main.py benchmark --suite b1  --index-dir index/t2i-100k/  --out benchmark_results/
+  python src/main.py query     --text "dragons fighting" --index-dir index/t2i-100k/ --data-dir data/
 """
 
 from __future__ import annotations
@@ -137,60 +137,6 @@ def cmd_query(args: argparse.Namespace) -> None:
         db_con.close()
 
 
-def cmd_benchmark(args: argparse.Namespace) -> None:
-    suites = args.suite if args.suite != ["all"] else ["b1", "b2", "b3", "b4", "b5", "b6"]
-
-    if "b1" in suites:
-        from bench.recall_latency import run_b1
-        query_path = args.data_dir / "queries.fbin"
-        if not query_path.exists():
-            candidates = list(args.data_dir.glob("*quer*.fbin"))
-            if not candidates:
-                logger.error(f"No queries file found in {args.data_dir}. Run download first.")
-                sys.exit(1)
-            query_path = candidates[0]
-
-        gt_path = args.data_dir / "gt.ibin"
-        run_b1(
-            index_dir=args.index_dir,
-            query_path=query_path,
-            gt_path=gt_path if gt_path.exists() else None,
-            out_dir=args.out,
-            dataset_tag=args.index_dir.name,
-        )
-
-    if "b4" in suites:
-        from bench.filtered import run_b4
-        query_path = args.data_dir / "queries.fbin"
-        if not query_path.exists():
-            candidates = list(args.data_dir.glob("*quer*.fbin"))
-            if not candidates:
-                logger.error(f"No queries file found in {args.data_dir}.")
-                sys.exit(1)
-            query_path = candidates[0]
-        run_b4(
-            index_dir=args.index_dir,
-            query_path=query_path,
-            out_dir=args.out,
-            dataset_tag=args.index_dir.name,
-        )
-
-    if "b3" in suites:
-        from bench.cost_model import run_b3
-        query_path = args.data_dir / "queries.fbin"
-        if not query_path.exists():
-            candidates = list(args.data_dir.glob("*quer*.fbin"))
-            if not candidates:
-                logger.error(f"No queries file found in {args.data_dir}.")
-                sys.exit(1)
-            query_path = candidates[0]
-        run_b3(
-            index_dir=args.index_dir,
-            query_path=query_path,
-            out_dir=args.out,
-            dataset_tag=args.index_dir.name,
-        )
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="retrieval",
@@ -221,18 +167,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="Index config name from config.DATASET_CONFIG (default: t2i-100k)",
     )
 
-    bench = sub.add_parser("benchmark", help="Run benchmark suite")
-    bench.add_argument(
-        "--suite", nargs="+",
-        choices=["b1", "b2", "b3", "b4", "b5", "b6", "all"],
-        default=["b1"],
-        help="Which benchmark(s) to run (default: b1)",
-    )
-    bench.add_argument("--index-dir", type=Path, required=True)
-    bench.add_argument("--data-dir", type=Path, default=Path("data/"),
-                       help="Directory containing queries.fbin and optionally gt.ibin")
-    bench.add_argument("--out", type=Path, default=Path("benchmark_results/"))
-
     qry = sub.add_parser("query", help="Run a single natural language query end-to-end")
     qry.add_argument("--text", required=True, help="Natural language query string")
     qry.add_argument("--index-dir", type=Path, required=True)
@@ -254,10 +188,9 @@ def main() -> None:
         return
 
     dispatch = {
-        "download":  cmd_download,
-        "index":     cmd_index,
-        "benchmark": cmd_benchmark,
-        "query":     cmd_query,
+        "download": cmd_download,
+        "index":    cmd_index,
+        "query":    cmd_query,
     }
     dispatch[args.command](args)
 
