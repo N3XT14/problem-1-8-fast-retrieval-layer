@@ -92,6 +92,8 @@ On T2I (randomly distributed vectors) this has no visible effect but the mechani
 
 The recall gap is inside PQ compression and not cell search which tuning nprobe wont close it but rerank does.
 
+![Recall–Latency Curve](recall_latency_curve.png)
+
 **Cost model — `t_ann = t_overhead + ndis × t_per_code`:**
 - 100K: t_per_code = 0.025µs, overhead = 0.017ms, R-sqr = 0.95
 - 1M: t_per_code = 0.014µs, overhead = 0.224ms, R-sqr = 0.9935

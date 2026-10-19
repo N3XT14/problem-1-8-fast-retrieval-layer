@@ -16,7 +16,5 @@ index/
 .vscode/
 .idea/
 
-notebooks/
-
 tests/
 src/bench/
