@@ -35,7 +35,6 @@ class VideoTable:
 
     def __init__(self, entries: list[VideoEntry]) -> None:
         self._table: dict[str, VideoEntry] = {e.video_id: e for e in entries}
-        # sorted by start_id for O(log n) frame_id → video_id lookup
         _sorted = sorted(entries, key=lambda e: e.start_id)
         self._start_ids: list[int] = [e.start_id for e in _sorted]
         self._sorted_entries: list[VideoEntry] = _sorted
@@ -57,7 +56,6 @@ class VideoTable:
         return e.start_id + min(int(ts * e.fps), n - 1)
 
     def frame_id_to_video(self, frame_id: int) -> Optional[str]:
-        """O(log n) lookup: frame_id → video_id using bisect on sorted start_ids."""
         i = bisect.bisect_right(self._start_ids, frame_id) - 1
         if i < 0:
             return None

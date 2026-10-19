@@ -35,7 +35,6 @@ def parse_query(text: str, top_k: int = 10) -> StructuredQuery:
         for m in re.finditer(pattern, remainder, re.I):
             value = m.group(1)
             if field == "video_id":
-                # "in video_0005" → capture "0005"; restore full id if purely numeric
                 filters.video_id = f"video_{value}" if value.isdigit() else value
             elif field == "timestamp_gte":
                 filters.timestamp_gte = float(value)

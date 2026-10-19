@@ -88,7 +88,7 @@ def build_index(
         base = _l2_normalize(base)
 
     f16_path = out_dir / "embeddings.f16"
-    logger.info(f"Writing fp16 store → {f16_path}  ({n * d * 2 / 1e6:.1f} MB) ...")
+    logger.info(f"Writing fp16 store [actual vectors] at {f16_path}  ({n * d * 2 / 1e6:.1f} MB) ...")
     mm = np.memmap(f16_path, dtype=np.float16, mode="w+", shape=(n, d))
     for start in range(0, n, 50_000):
         mm[start : start + 50_000] = base[start : start + 50_000].astype(np.float16)
@@ -126,7 +126,8 @@ def build_index(
 
     index_path = out_dir / "index.faiss"
     faiss.write_index(index, str(index_path))
-    logger.info(f"FAISS index saved → {index_path}  ({index_path.stat().st_size / 1e6:.1f} MB)")
+    
+    logger.info(f"FAISS index written to disk: {index_path}  ({index_path.stat().st_size / 1e6:.1f} MB)")
 
     meta = IndexMeta(
         n=n, dim=d, metric=cfg.metric.value,
@@ -137,7 +138,7 @@ def build_index(
     )
     meta.save(out_dir / "meta.json")
 
-    logger.info(f"Index built in {time.perf_counter() - t0:.1f}s  →  {out_dir}")
+    logger.info(f"Index built in {time.perf_counter() - t0:.1f}s, output saved to {out_dir}")
     return meta
 
 
